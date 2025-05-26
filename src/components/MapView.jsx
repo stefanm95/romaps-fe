@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
 import { fetchHighways, fetchBorders } from '../services/api';
-import BorderLayer from "./BorderLayer";
-import HighwayLayer from "./HighwayLayer";
 import NationalRoadsLayer from "./NationalRoadsLayer";
 import bucurestiImg from '../assets/img/bucuresti.jpg';
 import clujImg from '../assets/img/cluj.jpg';
@@ -18,10 +16,11 @@ const cities = [
   { id: 5, name: "Brașov", latitude: 45.6579, longitude: 25.6012, image_url: brasovImg },
 ];
 
-const MapView = ({selectedCity}) => {
+const MapView = ({ selectedCity }) => {
   const [highways, setHighways] = useState(null);
   const [borders, setBorders] = useState(null);
   const [loading, setLoading] = useState(true);
+  const markerRefs = useRef({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,17 +30,6 @@ const MapView = ({selectedCity}) => {
           fetchHighways(),
           fetchBorders(),
         ]);
-        // Verifică dacă există Point
-        const hasPoint = (geojson) =>
-          Array.isArray(geojson)
-            ? geojson.some(f => f.type === "Feature" && f.geometry?.type === "Point")
-            : geojson.type === "FeatureCollection" && geojson.features.some(f => f.geometry?.type === "Point");
-        console.log("Highways has Point:", hasPoint(highwaysData));
-        console.log("Borders has Point:", hasPoint(bordersData));
-        console.log(
-          "Highways Points:",
-          highwaysData?.features?.filter(f => f.geometry?.type === "Point")
-        );
         setHighways(highwaysData);
         setBorders(bordersData);
       } catch (err) {
@@ -52,12 +40,20 @@ const MapView = ({selectedCity}) => {
     loadData();
   }, []);
 
- // Zoom pe oraș selectat
-  function CityFlyTo() {
+  // Zoom și deschide popup la selectare oraș
+  function CityFlyToAndPopup() {
     const map = useMap();
     useEffect(() => {
       if (selectedCity) {
-        map.setView([selectedCity.latitude, selectedCity.longitude], 10);
+        // Centrează harta pe oraș
+        map.setView([selectedCity.latitude, selectedCity.longitude], 10, { animate: true });
+        // Deschide popup-ul după ce markerul e sigur montat
+        setTimeout(() => {
+          const marker = markerRefs.current[selectedCity.id];
+          if (marker && marker.openPopup) {
+            marker.openPopup();
+          }
+        }, 300); // 300ms delay pentru siguranță
       }
     }, [selectedCity, map]);
     return null;
@@ -74,7 +70,7 @@ const MapView = ({selectedCity}) => {
           : fc
       );
     }
-    if (geojson.type === "FeatureCollection") {
+    if (geojson?.type === "FeatureCollection") {
       return {
         ...geojson,
         features: geojson.features.filter(f => f.geometry?.type !== "Point"),
@@ -85,10 +81,10 @@ const MapView = ({selectedCity}) => {
 
   return (
     <div className="rounded-lg shadow-lg overflow-hidden border border-gray-200">
-      <MapContainer 
-        center={[45.9432, 24.9668]} 
-        zoom={7} 
-        style={{ height: "80vh", width: "100%" }} 
+      <MapContainer
+        center={[45.9432, 24.9668]}
+        zoom={7}
+        style={{ height: "80vh", width: "100%" }}
         maxBounds={[[43.5, 19.5], [48.5, 30]]}
         maxBoundsViscosity={1.0}
       >
@@ -105,6 +101,9 @@ const MapView = ({selectedCity}) => {
           <Marker
             key={city.id}
             position={[city.latitude, city.longitude]}
+            ref={ref => {
+              if (ref) markerRefs.current[city.id] = ref;
+            }}
           >
             <Popup>
               <b>{city.name}</b><br />
@@ -112,6 +111,7 @@ const MapView = ({selectedCity}) => {
             </Popup>
           </Marker>
         ))}
+        <CityFlyToAndPopup />
       </MapContainer>
       {loading && (
         <div className="absolute top-1/2 left-1/2 bg-white px-4 py-2 rounded shadow text-gray-700">
@@ -123,4 +123,5 @@ const MapView = ({selectedCity}) => {
 };
 
 export default MapView;
+
 
