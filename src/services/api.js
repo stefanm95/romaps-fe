@@ -13,3 +13,11 @@ export const fetchBorders = async () => {
   if (!res.ok) throw new Error('Failed to fetch borders');
   return res.json();
 };
+
+export const fetchNationalRoads = async () => {
+  const res = await fetch('/api/GeoData/nationalRoads', {
+    mode: 'cors'
+  });
+  if (!res.ok) throw new Error('Failed to fetch national roads');
+  return res.json();
+}
