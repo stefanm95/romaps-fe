@@ -1,11 +1,24 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { useEffect, useState, useRef } from "react";
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
 import { fetchHighways, fetchBorders } from "../services/api";
 import { CityFlyTo } from "../utils/mapHelpers";
 import BorderLayer from "./BorderLayer";
 import HighwayLayer from "./HighwayLayer";
 import NationalRoadsLayer from "./NationalRoadsLayer";
 import ToggleSwitch from "./ToggleSwitch";
+import bucurestiImg from '../assets/img/bucuresti.jpg';
+import clujImg from '../assets/img/cluj.jpg';
+import timisoaraImg from '../assets/img/timisoara.jpg';
+import iasiImg from '../assets/img/iasi.jpg';
+import brasovImg from '../assets/img/brasov.jpg';
+
+const cities = [
+  { id: 1, name: "București", latitude: 44.4268, longitude: 26.1025, image_url: bucurestiImg },
+  { id: 2, name: "Cluj-Napoca", latitude: 46.7712, longitude: 23.6236, image_url: clujImg },
+  { id: 3, name: "Timișoara", latitude: 45.7489, longitude: 21.2087, image_url: timisoaraImg },
+  { id: 4, name: "Iași", latitude: 47.1585, longitude: 27.6014, image_url: iasiImg },
+  { id: 5, name: "Brașov", latitude: 45.6579, longitude: 25.6012, image_url: brasovImg },
+];
 
 const MapView = ({ selectedCity }) => {
   const [highways, setHighways] = useState(null);
@@ -15,6 +28,7 @@ const MapView = ({ selectedCity }) => {
   // Toggle state
   const [showHighways, setShowHighways] = useState(true);
   const [showNationalRoads, setShowNationalRoads] = useState(false);
+  const markerRefs = useRef({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,6 +50,28 @@ const MapView = ({ selectedCity }) => {
     };
     loadData();
   }, []);
+
+
+  function filterOutPoints(geojson) {
+    if (Array.isArray(geojson)) {
+      return geojson.map(fc =>
+        fc.type === "FeatureCollection"
+          ? {
+              ...fc,
+              features: fc.features.filter(f => f.geometry?.type !== "Point"),
+            }
+          : fc
+      );
+    }
+    if (geojson?.type === "FeatureCollection") {
+      return {
+        ...geojson,
+        features: geojson.features.filter(f => f.geometry?.type !== "Point"),
+      };
+    }
+    return geojson;
+  }
+
 
   return (
     <div className="rounded-lg shadow-lg overflow-hidden border border-gray-200 relative">
@@ -71,6 +107,20 @@ const MapView = ({ selectedCity }) => {
         {showNationalRoads && <NationalRoadsLayer />}
         {/* Add CityFlyTo here */}
         <CityFlyTo selectedCity={selectedCity} />
+        {cities.map(city => (
+          <Marker
+            key={city.id}
+            position={[city.latitude, city.longitude]}
+            ref={ref => {
+              if (ref) markerRefs.current[city.id] = ref;
+            }}
+          >
+            <Popup>
+              <b>{city.name}</b><br />
+              <img src={city.image_url} alt={city.name} width={180} />
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
       {loading && (
         <div className="absolute top-1/2 left-1/2 bg-white px-4 py-2 rounded shadow text-gray-700">
