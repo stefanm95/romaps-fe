@@ -10,8 +10,8 @@ function App() {
 
   return (
     <LanguageProvider>
-        <Navbar />
       <div className="flex flex-col min-h-screen">
+        <Navbar />
         <div className="flex flex-1 overflow-hidden">
           <div className="w-full md:w-64 flex-shrink-0">
             <SidebarCities onSelectCity={setSelectedCity} selectedCity={selectedCity} />
