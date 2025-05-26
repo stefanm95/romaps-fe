@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
 import { fetchHighways, fetchBorders } from '../services/api';
 
 const cities = [
@@ -23,12 +23,16 @@ const MapView = ({ selectedCity }) => {
           fetchHighways(),
           fetchBorders(),
         ]);
+        // Verifică dacă există Point
+        const hasPoint = (geojson) =>
+          Array.isArray(geojson)
+            ? geojson.some(f => f.type === "Feature" && f.geometry?.type === "Point")
+            : geojson.type === "FeatureCollection" && geojson.features.some(f => f.geometry?.type === "Point");
+        console.log("Highways has Point:", hasPoint(highwaysData));
+        console.log("Borders has Point:", hasPoint(bordersData));
         setHighways(highwaysData);
         setBorders(bordersData);
-        console.log('Highways:', highwaysData);
-        console.log('Borders:', bordersData);
       } catch (err) {
-        // Handle error (optional)
         console.error('Error fetching data:', err);
       }
       setLoading(false);
@@ -47,23 +51,53 @@ const MapView = ({ selectedCity }) => {
     return null;
   }
 
+  function filterOutPoints(geojson) {
+    if (Array.isArray(geojson)) {
+      return geojson.map(fc =>
+        fc.type === "FeatureCollection"
+          ? {
+              ...fc,
+              features: fc.features.filter(f => f.geometry?.type !== "Point"),
+            }
+          : fc
+      );
+    }
+    if (geojson.type === "FeatureCollection") {
+      return {
+        ...geojson,
+        features: geojson.features.filter(f => f.geometry?.type !== "Point"),
+      };
+    }
+    return geojson;
+  }
+
   return (
     <div className="rounded-lg shadow-lg overflow-hidden border border-gray-200">
       <MapContainer 
         center={[45.9432, 24.9668]} 
         zoom={7} 
         style={{ height: "80vh", width: "100%" }} 
-        maxBounds={[[43.5, 19.5], [48.5, 30]]} // SW and NE corners
+        maxBounds={[[43.5, 19.5], [48.5, 30]]}
         maxBoundsViscosity={1.0}
-    >
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        {borders && <GeoJSON data={borders} style={{ color: 'green', weight: 2, fillColor: 'transparent', fillOpacity: 0 }} />}
+        {borders && <GeoJSON data={filterOutPoints(borders)} style={{ color: 'green', weight: 2, fillColor: 'transparent', fillOpacity: 0 }} />}
         {highways && Array.isArray(highways) && highways.map((hw, idx) => (
-          <GeoJSON key={idx} data={hw} style={{ color: 'blue', weight: 2 }} />
+          <GeoJSON key={idx} data={filterOutPoints(hw)} style={{ color: 'blue', weight: 2 }} />
         ))}
+        {/* Adaugă markerii pentru orașe */}
+        {cities.map(city => (
+          <Marker key={city.id} position={[city.latitude, city.longitude]}>
+            <Popup>
+              <b>{city.name}</b><br />
+              <img src={city.image_url} alt={city.name} width={180} />
+            </Popup>
+          </Marker>
+        ))}
+        <CityFlyTo />
       </MapContainer>
       {loading && (
         <div className="absolute top-1/2 left-1/2 bg-white px-4 py-2 rounded shadow text-gray-700">
@@ -75,3 +109,4 @@ const MapView = ({ selectedCity }) => {
 };
 
 export default MapView;
+
