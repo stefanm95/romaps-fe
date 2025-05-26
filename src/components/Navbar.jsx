@@ -2,6 +2,7 @@ import { useLanguage } from "../utils/LanguageContext";
 import { useState } from "react";
 
 const Navbar = () => {
+  // eslint-disable-next-line no-unused-vars
   const { lang, setLang, t } = useLanguage();
   const [openDropdown, setOpenDropdown] = useState(null);
 
