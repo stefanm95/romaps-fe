@@ -80,6 +80,7 @@ const MapView = ({ selectedCity }) => {
       <MapContainer
         center={[45.9432, 24.9668]}
         zoom={7}
+        minZoom={6}
         style={{ height: "80vh", width: "100%" }}
         maxBounds={[
           [43.5, 19.5],
