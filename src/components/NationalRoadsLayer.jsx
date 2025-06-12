@@ -8,7 +8,7 @@ const NationalRoadsLayer = ({ filterRef }) => {
   const [roadsData, setRoadsData] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState(null);
-  const map = useMap(); // 🗺️ access the map instance
+  const map = useMap(); 
 
   useEffect(() => {
     let isCancelled = false;
@@ -76,7 +76,7 @@ const NationalRoadsLayer = ({ filterRef }) => {
     return null;
   }
 
-  return <GeoJSON data={roadsData} style={{ color: "red", weight: 2 }} />;
+  return <GeoJSON data={roadsData} style={{ color: "red", weight: 1 }} />;
 };
 
 export default NationalRoadsLayer;

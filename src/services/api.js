@@ -22,8 +22,11 @@ export const fetchNationalRoads = async () => {
   return res.json();
 };
 
-export async function fetchNationalRoadsByRef(ref) {
-  const response = await fetch(`/api/GeoData/nationalRoads/filter?refValue=${encodeURIComponent(ref)}`);
+export const fetchNationalRoadsByRef = async (ref) => {
+  const response = await fetch(
+    `/api/GeoData/nationalRoads/filter?refValue=${encodeURIComponent(ref)}`,
+    { mode: "cors" }
+  );
   if (!response.ok) throw new Error("Failed to fetch national roads by ref");
   return response.json();
-}
+};

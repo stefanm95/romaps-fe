@@ -42,16 +42,22 @@ const MapView = ({ selectedCity }) => {
 
   return (
     <div className="rounded-lg shadow-lg overflow-hidden border border-gray-200 relative">
-      {/* Filter input only if National Roads toggle is on */}
-      {showNationalRoads && (
+      {/* Filter input only for National roads and highways */}
+      {(showHighways || showNationalRoads) && (
         <div className="p-2 bg-white bg-opacity-90 z-20">
           <label htmlFor="roadRef" className="mr-2 font-semibold">
-            Filter DN:
+            Filter{" "}
+            {showHighways && !showNationalRoads
+              ? "A"
+              : showNationalRoads && !showHighways
+              ? "DN"
+              : "A/DN"}
+            :
           </label>
           <input
             id="roadRef"
             type="text"
-            placeholder="DN1, DN22, etc."
+            placeholder="A1, A3, DN1, etc."
             value={filterRef}
             onChange={(e) => setFilterRef(e.target.value.toUpperCase())}
             className="border px-2 py-1 rounded"
@@ -93,10 +99,10 @@ const MapView = ({ selectedCity }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         <BorderLayer borders={borders} />
-        {showHighways && <HighwayLayer highways={highways} />}
-        {showNationalRoads && (
-          <NationalRoadsLayer filterRef={filterRef} />
+        {showHighways && (
+          <HighwayLayer highways={highways} filterRef={filterRef} />
         )}
+        {showNationalRoads && <NationalRoadsLayer filterRef={filterRef} />}
         <CityFlyTo selectedCity={selectedCity} />
       </MapContainer>
 
